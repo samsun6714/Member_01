@@ -13,10 +13,29 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    fetch("/api/user").then(res => res.json()).then(data => {
-      setUser(data);
-      setFormData({ name: data.name, email: data.email, phone: data.phone });
-    });
+    const defaultUser = {
+      id: "u123",
+      name: "สมชาย ใจดี",
+      email: "somchai@example.com",
+      status: "Gold Member",
+      points: 1250,
+      phone: "081-234-5678",
+      memberSince: "Oct 2023",
+      avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuCIDFcNL30ANmtFeZvId77liOGm-hldUn_1lp8yH5eBv4kFz4SR1HhZSctGjqiwrSE_f1VEvKTycCDy_eQxXfSnO-HSf_StZBltt_n2kgD5Q-fkEeM46y8VEH1FVX-bsQsdoGwnMS83LqPYYP3CUX7joDw3YOB1Zfe5oOk4FWgM7PFvlPQRrHhqBl4ElHd_r8nTELSmpTK_5iIbwnF24LiCt4sHqt6zQJXIvUMgKNyoIm7eXJ2UyDKKMw2R7_ART0xGLpHOGCzUpjo"
+    };
+
+    fetch("/api/user")
+      .then(res => res.json())
+      .then(data => {
+        setUser(data);
+        setFormData({ name: data.name, email: data.email, phone: data.phone });
+      })
+      .catch(() => {
+        const stored = localStorage.getItem("user_data");
+        const data = stored ? JSON.parse(stored) : defaultUser;
+        setUser(data);
+        setFormData({ name: data.name, email: data.email, phone: data.phone });
+      });
   }, []);
 
   const handleSave = async () => {
@@ -29,9 +48,15 @@ export default function ProfilePage() {
       });
       const updatedUser = await response.json();
       setUser(updatedUser);
+      localStorage.setItem("user_data", JSON.stringify(updatedUser));
       setIsEditing(false);
     } catch (error) {
       console.error("Failed to save profile:", error);
+      // Fallback save to localStorage
+      const updatedUser = { ...user, ...formData } as User;
+      setUser(updatedUser);
+      localStorage.setItem("user_data", JSON.stringify(updatedUser));
+      setIsEditing(false);
     } finally {
       setIsSaving(false);
     }
@@ -52,13 +77,20 @@ export default function ProfilePage() {
       const reader = new FileReader();
       reader.onloadend = async () => {
         const base64String = reader.result as string;
-        const response = await fetch("/api/user", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ avatar: base64String }),
-        });
-        const updatedUser = await response.json();
-        setUser(updatedUser);
+        try {
+          const response = await fetch("/api/user", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ avatar: base64String }),
+          });
+          const updatedUser = await response.json();
+          setUser(updatedUser);
+          localStorage.setItem("user_data", JSON.stringify(updatedUser));
+        } catch (err) {
+          const updatedUser = { ...user, avatar: base64String } as User;
+          setUser(updatedUser);
+          localStorage.setItem("user_data", JSON.stringify(updatedUser));
+        }
         setIsUploading(false);
       };
       reader.readAsDataURL(file);

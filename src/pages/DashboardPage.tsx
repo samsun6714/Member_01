@@ -9,8 +9,34 @@ export default function DashboardPage() {
   const [activities, setActivities] = useState<Activity[]>([]);
 
   useEffect(() => {
-    fetch("/api/user").then(res => res.json()).then(setUser);
-    fetch("/api/activity").then(res => res.json()).then(setActivities);
+    const defaultUser = {
+      id: "u123",
+      name: "สมชาย ใจดี",
+      email: "somchai@example.com",
+      status: "Gold Member",
+      points: 1250,
+      phone: "081-234-5678",
+      memberSince: "Oct 2023",
+      avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuCIDFcNL30ANmtFeZvId77liOGm-hldUn_1lp8yH5eBv4kFz4SR1HhZSctGjqiwrSE_f1VEvKTycCDy_eQxXfSnO-HSf_StZBltt_n2kgD5Q-fkEeM46y8VEH1FVX-bsQsdoGwnMS83LqPYYP3CUX7joDw3YOB1Zfe5oOk4FWgM7PFvlPQRrHhqBl4ElHd_r8nTELSmpTK_5iIbwnF24LiCt4sHqt6zQJXIvUMgKNyoIm7eXJ2UyDKKMw2R7_ART0xGLpHOGCzUpjo"
+    };
+    const defaultActivities = [
+      { id: "1", title: "Coffee Purchase", date: "Today, 08:30 AM", points: "+25 pts", icon: "Coffee" },
+      { id: "2", title: "Merchandise Store", date: "Yesterday, 14:15 PM", points: "+120 pts", icon: "ShoppingBag" },
+      { id: "3", title: "Reward Claimed", date: "Oct 12, 2023", points: "-500 pts", icon: "Gift" }
+    ];
+
+    fetch("/api/user")
+      .then(res => res.json())
+      .then(setUser)
+      .catch(() => {
+        const stored = localStorage.getItem("user_data");
+        setUser(stored ? JSON.parse(stored) : defaultUser);
+      });
+
+    fetch("/api/activity")
+      .then(res => res.json())
+      .then(setActivities)
+      .catch(() => setActivities(defaultActivities));
   }, []);
 
   const IconMap: Record<string, any> = {

@@ -49,7 +49,15 @@ export function TopBar() {
   const [avatar, setAvatar] = useState<string>("");
 
   useEffect(() => {
-    fetch("/api/user").then(res => res.json()).then(data => setAvatar(data.avatar));
+    fetch("/api/user")
+      .then(res => res.json())
+      .then(data => setAvatar(data.avatar))
+      .catch(() => {
+        const stored = localStorage.getItem("user_data");
+        if (stored) {
+          setAvatar(JSON.parse(stored).avatar);
+        }
+      });
   }, []);
 
   return (
